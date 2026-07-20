@@ -14,6 +14,7 @@ import Movements from './pages/Movements';
 import Maintenances from './pages/Maintenances';
 import Dashboard from './pages/Dashboard';
 import Reports from './pages/Reports';
+import logoMaxpesa from './assets/logo_branca_maxpesa.png';
 
 // Link ativo na sidebar
 function NavLink({ to, icon: Icon, children }) {
@@ -84,23 +85,16 @@ function AppLayout({ theme, toggleTheme }) {
           borderBottom: '1px solid #222',
           display: 'flex',
           flexDirection: 'column',
+          alignItems: 'flex-start',
           gap: '4px'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{
-              width: '38px', height: '38px', borderRadius: '4px',
-              background: 'var(--brand-red)', display: 'flex',
-              alignItems: 'center', justifyContent: 'center',
-              fontWeight: '900', fontSize: '20px', color: '#fff', fontStyle: 'italic'
-            }}>M</div>
-            <div>
-              <div style={{ fontWeight: '900', fontSize: '16px', color: '#fff', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                Grupo Maxpesa
-              </div>
-              <div style={{ fontSize: '11px', color: 'var(--gray-medium)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                Controle de Ativos TI
-              </div>
-            </div>
+          <img
+            src={logoMaxpesa}
+            alt="Grupo Maxpesa"
+            style={{ height: '48px', width: 'auto', objectFit: 'contain' }}
+          />
+          <div style={{ fontSize: '11px', color: 'var(--gray-medium)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            Controle de Ativos TI
           </div>
         </div>
 
