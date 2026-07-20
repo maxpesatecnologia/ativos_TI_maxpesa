@@ -79,12 +79,25 @@ export default function AssetForm() {
     setFormData(prev => ({ ...prev, [name]: value }));
   }
 
+  async function gerarPatrimonioAutomatico() {
+    const { data } = await supabase
+      .from('it_assets')
+      .select('patrimony_code')
+      .like('patrimony_code', 'AT-%')
+      .order('patrimony_code', { ascending: false })
+      .limit(1);
+    const ultimo = data?.[0]?.patrimony_code;
+    const numero = ultimo ? parseInt(ultimo.replace('AT-', ''), 10) + 1 : 1;
+    return `AT-${String(numero).padStart(4, '0')}`;
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
 
     const payload = {
       ...formData,
+      patrimony_code: formData.patrimony_code || await gerarPatrimonioAutomatico(),
       category_id: formData.category_id || null,
       responsible_id: formData.responsible_id || null,
       delivery_date: formData.delivery_date || null
@@ -121,11 +134,6 @@ export default function AssetForm() {
           <div className="card">
             <h3 style={{ marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>Informações Gerais</h3>
             
-            <div className="input-group">
-              <label>Código do Patrimônio *</label>
-              <input required className="input" name="patrimony_code" value={formData.patrimony_code} onChange={handleChange} />
-            </div>
-
             <div className="input-group">
               <label>Nome do Equipamento *</label>
               <input required className="input" name="name" value={formData.name} onChange={handleChange} />
