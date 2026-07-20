@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Plus, Trash2 } from 'lucide-react';
+
+const TIPOS = ['Hardware', 'Licença', 'Celular'];
 
 export default function Categories() {
   const [categories, setCategories] = useState([]);
   const [name, setName] = useState('');
+  const [tipo, setTipo] = useState('Hardware');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,14 +24,26 @@ export default function Categories() {
   async function handleAdd(e) {
     e.preventDefault();
     if (!name.trim()) return;
-    
-    const { error } = await supabase.from('it_categories').insert([{ name }]);
-    if (!error) {
-      setName('');
-      fetchCategories();
-    } else {
-      alert('Erro ao salvar: ' + error.message);
+
+    try {
+      const { error } = await supabase.from('it_categories').insert([{ name, tipo }]);
+      if (!error) {
+        setName('');
+        setTipo('Hardware');
+        fetchCategories();
+      } else {
+        alert('Erro ao salvar: ' + error.message);
+      }
+    } catch (err) {
+      console.error('Falha inesperada ao adicionar categoria:', err);
+      alert('Falha inesperada ao adicionar categoria: ' + err.message);
     }
+  }
+
+  async function handleTipoChange(id, novoTipo) {
+    const { error } = await supabase.from('it_categories').update({ tipo: novoTipo }).eq('id', id);
+    if (!error) fetchCategories();
+    else alert('Erro ao atualizar tipo: ' + error.message);
   }
 
   async function handleDelete(id) {
@@ -43,13 +58,16 @@ export default function Categories() {
       <h2 style={{ marginBottom: '20px' }}>Gestão de Categorias</h2>
 
       <form onSubmit={handleAdd} style={{ display: 'flex', gap: '10px', marginBottom: '24px' }}>
-        <input 
-          className="input" 
-          value={name} 
-          onChange={e => setName(e.target.value)} 
-          placeholder="Nome da categoria (ex: Notebook, Monitor)..." 
+        <input
+          className="input"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          placeholder="Nome da categoria (ex: Notebook, Monitor)..."
           style={{ flex: 1, maxWidth: '400px' }}
         />
+        <select className="input" value={tipo} onChange={e => setTipo(e.target.value)} style={{ maxWidth: '200px' }}>
+          {TIPOS.map(t => <option key={t} value={t}>{t}</option>)}
+        </select>
         <button type="submit" className="btn btn-primary">
           <Plus size={18} /> Adicionar
         </button>
@@ -61,6 +79,7 @@ export default function Categories() {
             <thead>
               <tr>
                 <th>Nome</th>
+                <th style={{ width: '180px' }}>Tipo</th>
                 <th style={{ width: '100px', textAlign: 'center' }}>Ações</th>
               </tr>
             </thead>
@@ -68,10 +87,20 @@ export default function Categories() {
               {categories.map(cat => (
                 <tr key={cat.id}>
                   <td>{cat.name}</td>
+                  <td>
+                    <select
+                      className="input"
+                      value={cat.tipo || 'Hardware'}
+                      onChange={e => handleTipoChange(cat.id, e.target.value)}
+                      style={{ padding: '6px 10px' }}
+                    >
+                      {TIPOS.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </td>
                   <td style={{ textAlign: 'center' }}>
-                    <button 
-                      onClick={() => handleDelete(cat.id)} 
-                      className="btn btn-outline" 
+                    <button
+                      onClick={() => handleDelete(cat.id)}
+                      className="btn btn-outline"
                       title="Excluir"
                       style={{ padding: '6px', color: 'var(--status-danger)', borderColor: 'transparent' }}
                     >
@@ -82,7 +111,7 @@ export default function Categories() {
               ))}
               {categories.length === 0 && (
                 <tr>
-                  <td colSpan="2" style={{ textAlign: 'center', padding: '24px', color: 'var(--text-secondary)' }}>
+                  <td colSpan="3" style={{ textAlign: 'center', padding: '24px', color: 'var(--text-secondary)' }}>
                     Nenhuma categoria cadastrada.
                   </td>
                 </tr>

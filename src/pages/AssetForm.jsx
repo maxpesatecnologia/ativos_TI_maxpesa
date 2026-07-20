@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Save, ArrowLeft } from 'lucide-react';
 
 export default function AssetForm() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const tipoDoFiltro = searchParams.get('tipo'); // 'Hardware' | 'Licença' | 'Celular' vindo da aba de origem em /assets
   const isEditing = !!id;
 
   const [categories, setCategories] = useState([]);
@@ -26,11 +28,24 @@ export default function AssetForm() {
     os: '',
     ip_address: '',
     mac_address: '',
+    license_type: '',
+    phone_number: '',
+    carrier: '',
+    imei_device: '',
+    imei_chip: '',
     responsible_id: '',
     physical_location: '',
     delivery_date: '',
     photo_url: ''
   });
+
+  const categoriaSelecionada = categories.find(c => c.id === formData.category_id);
+  const tipoCategoria = categoriaSelecionada?.tipo || (!isEditing && tipoDoFiltro) || 'Hardware';
+
+  // Em um novo ativo aberto a partir de um filtro (Hardware/Licença/Celular), só mostra as categorias daquele tipo
+  const categoriasDisponiveis = (!isEditing && tipoDoFiltro)
+    ? categories.filter(c => c.tipo === tipoDoFiltro)
+    : categories;
 
   useEffect(() => {
     fetchOptions();
@@ -93,7 +108,10 @@ export default function AssetForm() {
         <button onClick={() => navigate('/assets')} className="btn btn-outline" style={{ padding: '8px', border: 'none' }}>
           <ArrowLeft size={20} />
         </button>
-        <h2>{isEditing ? 'Editar Ativo' : 'Novo Ativo'}</h2>
+        <h2>
+          {isEditing ? 'Editar Ativo' : 'Novo Ativo'}
+          {!isEditing && tipoDoFiltro && ` — ${tipoDoFiltro}`}
+        </h2>
       </div>
 
       <form onSubmit={handleSubmit}>
@@ -117,8 +135,13 @@ export default function AssetForm() {
               <label>Categoria *</label>
               <select required className="input" name="category_id" value={formData.category_id} onChange={handleChange}>
                 <option value="">Selecione...</option>
-                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {categoriasDisponiveis.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
+              {!isEditing && tipoDoFiltro && categoriasDisponiveis.length === 0 && (
+                <small style={{ color: 'var(--status-warning)' }}>
+                  Nenhuma categoria do tipo "{tipoDoFiltro}" cadastrada ainda. Crie uma em Categorias antes de continuar.
+                </small>
+              )}
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -154,37 +177,75 @@ export default function AssetForm() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            {/* Seção 2: Técnico */}
-            <div className="card">
-              <h3 style={{ marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>Informações Técnicas</h3>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div className="input-group">
-                  <label>Processador</label>
-                  <input className="input" name="processor" value={formData.processor} onChange={handleChange} />
-                </div>
-                <div className="input-group">
-                  <label>Memória RAM</label>
-                  <input className="input" name="ram" value={formData.ram} onChange={handleChange} />
-                </div>
-                <div className="input-group">
-                  <label>Armazenamento</label>
-                  <input className="input" name="storage" value={formData.storage} onChange={handleChange} />
-                </div>
-                <div className="input-group">
-                  <label>Sistema Operacional</label>
-                  <input className="input" name="os" value={formData.os} onChange={handleChange} />
-                </div>
-                <div className="input-group">
-                  <label>Endereço IP</label>
-                  <input className="input" name="ip_address" value={formData.ip_address} onChange={handleChange} />
-                </div>
-                <div className="input-group">
-                  <label>Endereço MAC</label>
-                  <input className="input" name="mac_address" value={formData.mac_address} onChange={handleChange} />
+            {/* Seção 2: campos específicos por tipo de categoria */}
+            {tipoCategoria === 'Hardware' && (
+              <div className="card">
+                <h3 style={{ marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>Informações Técnicas</h3>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div className="input-group">
+                    <label>Processador</label>
+                    <input className="input" name="processor" value={formData.processor} onChange={handleChange} />
+                  </div>
+                  <div className="input-group">
+                    <label>Memória RAM</label>
+                    <input className="input" name="ram" value={formData.ram} onChange={handleChange} />
+                  </div>
+                  <div className="input-group">
+                    <label>Armazenamento</label>
+                    <input className="input" name="storage" value={formData.storage} onChange={handleChange} />
+                  </div>
+                  <div className="input-group">
+                    <label>Sistema Operacional</label>
+                    <input className="input" name="os" value={formData.os} onChange={handleChange} />
+                  </div>
+                  <div className="input-group">
+                    <label>Endereço IP</label>
+                    <input className="input" name="ip_address" value={formData.ip_address} onChange={handleChange} />
+                  </div>
+                  <div className="input-group">
+                    <label>Endereço MAC</label>
+                    <input className="input" name="mac_address" value={formData.mac_address} onChange={handleChange} />
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
+
+            {tipoCategoria === 'Licença' && (
+              <div className="card">
+                <h3 style={{ marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>Informações da Licença</h3>
+
+                <div className="input-group">
+                  <label>Tipo da Licença</label>
+                  <input className="input" name="license_type" placeholder="Ex: Office 365, Windows Server, Antivírus..." value={formData.license_type} onChange={handleChange} />
+                </div>
+              </div>
+            )}
+
+            {tipoCategoria === 'Celular' && (
+              <div className="card">
+                <h3 style={{ marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>Informações do Celular</h3>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div className="input-group">
+                    <label>Nº Telefone</label>
+                    <input className="input" name="phone_number" value={formData.phone_number} onChange={handleChange} />
+                  </div>
+                  <div className="input-group">
+                    <label>Operadora</label>
+                    <input className="input" name="carrier" value={formData.carrier} onChange={handleChange} />
+                  </div>
+                  <div className="input-group">
+                    <label>IMEI do Aparelho</label>
+                    <input className="input" name="imei_device" value={formData.imei_device} onChange={handleChange} />
+                  </div>
+                  <div className="input-group">
+                    <label>IMEI do Chip</label>
+                    <input className="input" name="imei_chip" value={formData.imei_chip} onChange={handleChange} />
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Seção 3: Localização */}
             <div className="card">
