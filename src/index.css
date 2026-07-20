@@ -1,0 +1,283 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  /* Cores Maxpesa - Primárias e Acentos */
+  --brand-red: #E30613;
+  --brand-black: #111111;
+  --brand-white: #FFFFFF;
+  --brand-red-dark: #B30000;
+  --brand-orange: #FF6A00;
+
+  /* Cores Maxpesa - Secundárias */
+  --gray-dark: #333333;
+  --gray-medium: #666666;
+  --gray-light: #BFBFBF;
+
+  /* Mapeamento de Tema - Claro */
+  --bg-primary: #f4f4f4; 
+  --bg-secondary: var(--brand-white);
+  --bg-sidebar: var(--brand-black);
+  
+  --text-primary: var(--brand-black);
+  --text-secondary: var(--gray-dark);
+  --text-inverse: var(--brand-white);
+  
+  --border-color: #e0e0e0;
+  
+  --brand-primary: var(--brand-red);
+  --brand-primary-hover: var(--brand-red-dark);
+  --brand-secondary: var(--brand-black);
+  --brand-secondary-hover: var(--gray-dark);
+  
+  /* Cores de Status */
+  --status-success: #10b981;
+  --status-warning: var(--brand-orange);
+  --status-danger: var(--brand-red);
+  --status-info: #0ea5e9;
+
+  --sidebar-text: var(--gray-light);
+  --sidebar-text-active: var(--brand-white);
+  --sidebar-bg-active: var(--brand-red);
+
+  /* Tipografia */
+  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Inter', system-ui, -apple-system, sans-serif; /* Usaremos Inter com weight pesado para títulos se Square não estiver disponível web-safe */
+  
+  /* Raios e Formas (Maxpesa usa cantos mais retos/profissionais) */
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --radius-full: 9999px;
+
+  /* Sombras */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme='dark'] {
+  /* Mapeamento de Tema - Escuro */
+  --bg-primary: #0a0a0a;
+  --bg-secondary: var(--brand-black);
+  --bg-sidebar: var(--brand-black);
+  
+  --text-primary: var(--brand-white);
+  --text-secondary: var(--gray-light);
+  --text-inverse: var(--brand-black);
+  
+  --border-color: var(--gray-dark);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 800; /* Simulando o SQUARE BLACK/BOLD */
+  letter-spacing: -0.02em;
+  color: var(--brand-primary);
+}
+
+h2 {
+  font-size: 24px;
+  text-transform: uppercase;
+}
+
+/* Classes de Layout */
+.app-container {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 260px;
+  background-color: var(--bg-sidebar);
+  color: var(--sidebar-text);
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease;
+  border-right: 4px solid var(--brand-primary); /* Detalhe vermelho na borda do menu */
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.header {
+  height: 64px;
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  justify-content: space-between;
+}
+
+.page-content {
+  padding: 32px;
+  flex: 1;
+}
+
+/* Cartões */
+.card {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  border-top: 4px solid var(--brand-primary); /* Detalhe do Brand Card */
+}
+
+.card h3 {
+  color: var(--brand-primary);
+  text-transform: uppercase;
+  font-size: 16px;
+  margin-bottom: 16px;
+  font-weight: 700;
+}
+
+/* Botões */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  font-family: inherit;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  gap: 8px;
+}
+
+.btn-primary {
+  background-color: var(--brand-primary);
+  color: var(--brand-white);
+}
+
+.btn-primary:hover {
+  background-color: var(--brand-primary-hover);
+}
+
+.btn-secondary {
+  background-color: var(--brand-secondary);
+  color: var(--brand-white);
+}
+
+.btn-secondary:hover {
+  background-color: var(--brand-secondary-hover);
+}
+
+.btn-outline {
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.btn-outline:hover {
+  background-color: var(--bg-primary);
+  border-color: var(--gray-medium);
+}
+
+/* Inputs */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.input-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.input {
+  padding: 12px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--brand-primary);
+}
+
+/* Tabelas */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-secondary);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+th, td {
+  padding: 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+th {
+  background-color: var(--bg-primary);
+  color: var(--brand-black);
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+[data-theme='dark'] th {
+  color: var(--brand-white);
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.badge-success { background: rgba(16, 185, 129, 0.15); color: var(--status-success); }
+.badge-warning { background: rgba(255, 106, 0, 0.15); color: var(--status-warning); }
+.badge-danger { background: rgba(227, 6, 19, 0.15); color: var(--status-danger); }
+.badge-info { background: rgba(14, 165, 233, 0.15); color: var(--status-info); }
