@@ -12,6 +12,7 @@ export default function AssetForm() {
 
   const [categories, setCategories] = useState([]);
   const [responsibles, setResponsibles] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -60,6 +61,9 @@ export default function AssetForm() {
 
     const { data: resps } = await supabase.from('it_responsibles').select('*, department:it_departments(name)').order('name');
     setResponsibles(resps || []);
+
+    const { data: deps } = await supabase.from('it_departments').select('*').order('name');
+    setDepartments(deps || []);
   }
 
   async function fetchAsset() {
@@ -268,8 +272,11 @@ export default function AssetForm() {
               </div>
 
               <div className="input-group">
-                <label>Local Físico (Sala/Setor)</label>
-                <input className="input" name="physical_location" value={formData.physical_location} onChange={handleChange} />
+                <label>Local Físico (Departamento)</label>
+                <select className="input" name="physical_location" value={formData.physical_location} onChange={handleChange}>
+                  <option value="">Selecione...</option>
+                  {departments.map(d => <option key={d.id} value={d.name}>{d.name}{d.unit ? ` (${d.unit})` : ''}</option>)}
+                </select>
               </div>
 
               <div className="input-group">

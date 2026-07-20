@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Monitor, Users, Wrench, ArrowLeftRight,
-  Tag, Building2, Sun, Moon, ChevronDown, ChevronRight, Settings, FileBarChart
+  Tag, Building2, Sun, Moon, ChevronDown, ChevronRight, Settings, FileBarChart, Printer
 } from 'lucide-react';
 
 import Categories from './pages/Categories';
@@ -12,6 +12,7 @@ import Assets from './pages/Assets';
 import AssetForm from './pages/AssetForm';
 import Movements from './pages/Movements';
 import Maintenances from './pages/Maintenances';
+import Printers from './pages/Printers';
 import Dashboard from './pages/Dashboard';
 import Reports from './pages/Reports';
 
@@ -112,6 +113,7 @@ function AppLayout({ theme, toggleTheme }) {
             Inventário
           </div>
           <NavLink to="/assets" icon={Monitor}>Ativos</NavLink>
+          <NavLink to="/printers" icon={Printer}>Impressoras</NavLink>
           <NavLink to="/movements" icon={ArrowLeftRight}>Movimentações</NavLink>
           <NavLink to="/maintenances" icon={Wrench}>Manutenções</NavLink>
           <NavLink to="/reports" icon={FileBarChart}>Relatórios</NavLink>
@@ -162,6 +164,7 @@ function AppLayout({ theme, toggleTheme }) {
             <Route path="/assets" element={<Assets />} />
             <Route path="/assets/new" element={<AssetForm />} />
             <Route path="/assets/edit/:id" element={<AssetForm />} />
+            <Route path="/printers" element={<Printers />} />
             <Route path="/categories" element={<Categories />} />
             <Route path="/departments" element={<Departments />} />
             <Route path="/responsibles" element={<Responsibles />} />
