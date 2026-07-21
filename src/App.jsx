@@ -114,7 +114,7 @@ function AppLayout({ theme, toggleTheme }) {
       </aside>
 
       {/* Conteúdo principal */}
-      <main className="main-content">
+      <main className="main-content" style={{ '--page-bg-image': `url(${craneFleetBg})` }}>
         <header className="header">
           <div style={{ fontWeight: '700', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-secondary)' }}>
             Sistema de Gestão de Ativos
@@ -149,7 +149,7 @@ function AppLayout({ theme, toggleTheme }) {
           </div>
         </header>
 
-        <div className="page-content" style={{ '--page-bg-image': `url(${craneFleetBg})` }}>
+        <div className="page-content">
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/assets" element={<Assets />} />

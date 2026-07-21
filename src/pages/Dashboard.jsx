@@ -24,7 +24,7 @@ function StatCard({ label, value, icon: Icon, color }) {
         <div style={{ fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
           {label}
         </div>
-        <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: `${color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: `color-mix(in srgb, ${color} 20%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Icon size={20} style={{ color }} />
         </div>
       </div>
@@ -88,7 +88,7 @@ export default function Dashboard() {
 
       {/* Cards de Estatísticas */}
       <div style={{ display: 'flex', gap: '16px', marginBottom: '28px', flexWrap: 'wrap' }}>
-        <StatCard label="Total de Ativos" value={stats.total} icon={BarChart2} color="#111111" />
+        <StatCard label="Total de Ativos" value={stats.total} icon={BarChart2} color="var(--text-primary)" />
         <StatCard label="Em Uso" value={stats.inUse} icon={Monitor} color="#10b981" />
         <StatCard label="Estoque" value={stats.stock} icon={PackageCheck} color="#0ea5e9" />
         <StatCard label="Manutenção" value={stats.maintenance} icon={Wrench} color="#FF6A00" />
