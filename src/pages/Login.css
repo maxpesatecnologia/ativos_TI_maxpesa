@@ -52,7 +52,7 @@
 }
 
 .login-logo {
-  height: 116px;
+  height: 76px;
   width: auto;
   margin-bottom: 20px;
 }
@@ -95,6 +95,10 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
+.login-card .input:hover {
+  border-color: #c4c4c4;
+}
+
 .login-card .input:focus {
   border-color: var(--brand-primary);
   box-shadow: 0 0 0 4px rgba(227, 6, 19, 0.12);
@@ -120,6 +124,17 @@
 .login-submit {
   width: 100%;
   margin-bottom: 12px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.2s;
+}
+
+.login-submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(227, 6, 19, 0.3);
+}
+
+.login-submit:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(227, 6, 19, 0.25);
 }
 
 .login-link {
@@ -130,6 +145,8 @@
   width: 100%;
   text-align: center;
   font-family: inherit;
+  padding: 4px 0;
+  transition: color 0.15s ease;
 }
 
 .login-link-muted {
@@ -137,7 +154,7 @@
   margin-bottom: 8px;
 }
 
-.login-link-accent {
-  color: var(--brand-primary);
-  font-weight: 600;
+.login-link-muted:hover {
+  color: var(--gray-dark);
+  text-decoration: underline;
 }

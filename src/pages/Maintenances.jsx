@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Plus, Wrench } from 'lucide-react';
+import Select from '../components/Select';
 
 export default function Maintenances() {
   const [maintenances, setMaintenances] = useState([]);
@@ -50,6 +51,10 @@ export default function Maintenances() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (!form.asset_id) {
+      alert('Selecione o equipamento.');
+      return;
+    }
     const payload = {
       ...form,
       technician_id: form.technician_id || null,
@@ -93,10 +98,10 @@ export default function Maintenances() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               <div className="input-group">
                 <label>Equipamento *</label>
-                <select className="input" name="asset_id" value={form.asset_id} onChange={handleChange} required>
+                <Select className="input" name="asset_id" value={form.asset_id} onChange={handleChange} required>
                   <option value="">Selecione o ativo...</option>
                   {assets.map(a => <option key={a.id} value={a.id}>{a.patrimony_code} — {a.name}</option>)}
-                </select>
+                </Select>
               </div>
               <div className="input-group">
                 <label>Data *</label>
@@ -104,19 +109,19 @@ export default function Maintenances() {
               </div>
               <div className="input-group">
                 <label>Tipo de Manutenção</label>
-                <select className="input" name="maintenance_type" value={form.maintenance_type} onChange={handleChange}>
+                <Select className="input" name="maintenance_type" value={form.maintenance_type} onChange={handleChange}>
                   <option>Corretiva</option>
                   <option>Preventiva</option>
                   <option>Instalação</option>
                   <option>Outro</option>
-                </select>
+                </Select>
               </div>
               <div className="input-group">
                 <label>Técnico Responsável</label>
-                <select className="input" name="technician_id" value={form.technician_id} onChange={handleChange}>
+                <Select className="input" name="technician_id" value={form.technician_id} onChange={handleChange}>
                   <option value="">Selecione...</option>
                   {responsibles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-                </select>
+                </Select>
               </div>
               <div className="input-group" style={{ gridColumn: '1 / -1' }}>
                 <label>Problema Encontrado</label>

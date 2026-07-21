@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Edit } from 'lucide-react';
+import Select from '../components/Select';
 
 export default function Printers() {
   const [printers, setPrinters] = useState([]);
@@ -9,6 +10,7 @@ export default function Printers() {
   const [cartridgeType, setCartridgeType] = useState('');
   const [departmentId, setDepartmentId] = useState('');
   const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
     fetchPrinters();
@@ -30,19 +32,39 @@ export default function Printers() {
     setDepartments(data || []);
   }
 
+  function startEdit(printer) {
+    setEditingId(printer.id);
+    setModel(printer.model);
+    setCartridgeType(printer.cartridge_type || '');
+    setDepartmentId(printer.department_id || '');
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setModel('');
+    setCartridgeType('');
+    setDepartmentId('');
+  }
+
   async function handleAdd(e) {
     e.preventDefault();
     if (!model.trim()) return;
 
-    const { error } = await supabase.from('it_printers').insert([{
+    const payload = {
       model,
       cartridge_type: cartridgeType || null,
       department_id: departmentId || null,
-    }]);
+    };
+
+    const { error } = editingId
+      ? await supabase.from('it_printers').update(payload).eq('id', editingId)
+      : await supabase.from('it_printers').insert([payload]);
+
     if (!error) {
       setModel('');
       setCartridgeType('');
       setDepartmentId('');
+      setEditingId(null);
       fetchPrinters();
     } else {
       alert('Erro ao salvar: ' + error.message);
@@ -75,7 +97,7 @@ export default function Printers() {
           placeholder="Tipo de Cartucho (ex: HP 58A)"
           style={{ flex: 1, minWidth: '200px', maxWidth: '280px' }}
         />
-        <select
+        <Select
           className="input"
           value={departmentId}
           onChange={e => setDepartmentId(e.target.value)}
@@ -83,10 +105,13 @@ export default function Printers() {
         >
           <option value="">Setor...</option>
           {departments.map(d => <option key={d.id} value={d.id}>{d.name}{d.unit ? ` (${d.unit})` : ''}</option>)}
-        </select>
+        </Select>
         <button type="submit" className="btn btn-primary">
-          <Plus size={18} /> Adicionar
+          {editingId ? <><Edit size={18} /> Salvar</> : <><Plus size={18} /> Adicionar</>}
         </button>
+        {editingId && (
+          <button type="button" className="btn btn-outline" onClick={cancelEdit}>Cancelar</button>
+        )}
       </form>
 
       {loading ? <p>Carregando impressoras...</p> : (
@@ -97,7 +122,7 @@ export default function Printers() {
                 <th>Modelo</th>
                 <th>Tipo de Cartucho</th>
                 <th>Setor</th>
-                <th style={{ width: '100px', textAlign: 'center' }}>Ações</th>
+                <th style={{ width: '120px', textAlign: 'center' }}>Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -107,6 +132,14 @@ export default function Printers() {
                   <td>{p.cartridge_type || '—'}</td>
                   <td>{p.department ? `${p.department.name}${p.department.unit ? ` (${p.department.unit})` : ''}` : '—'}</td>
                   <td style={{ textAlign: 'center' }}>
+                    <button
+                      onClick={() => startEdit(p)}
+                      className="btn btn-outline"
+                      title="Editar"
+                      style={{ padding: '6px', borderColor: 'transparent' }}
+                    >
+                      <Edit size={18} />
+                    </button>
                     <button
                       onClick={() => handleDelete(p.id)}
                       className="btn btn-outline"

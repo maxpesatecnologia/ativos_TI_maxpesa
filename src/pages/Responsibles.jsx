@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Edit } from 'lucide-react';
+import Select from '../components/Select';
 
 export default function Responsibles() {
   const [responsibles, setResponsibles] = useState([]);
   const [departments, setDepartments] = useState([]);
-  
+
   const [name, setName] = useState('');
   const [departmentId, setDepartmentId] = useState('');
   const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -31,18 +33,32 @@ export default function Responsibles() {
     setLoading(false);
   }
 
+  function startEdit(resp) {
+    setEditingId(resp.id);
+    setName(resp.name);
+    setDepartmentId(resp.department_id || '');
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setName('');
+    setDepartmentId('');
+  }
+
   async function handleAdd(e) {
     e.preventDefault();
     if (!name.trim() || !departmentId) return;
-    
-    const { error } = await supabase.from('it_responsibles').insert([{ 
-      name, 
-      department_id: departmentId 
-    }]);
-    
+
+    const payload = { name, department_id: departmentId };
+
+    const { error } = editingId
+      ? await supabase.from('it_responsibles').update(payload).eq('id', editingId)
+      : await supabase.from('it_responsibles').insert([payload]);
+
     if (!error) {
       setName('');
       setDepartmentId('');
+      setEditingId(null);
       fetchData();
     } else {
       alert('Erro ao salvar: ' + error.message);
@@ -71,21 +87,24 @@ export default function Responsibles() {
           />
         </div>
         <div className="input-group" style={{ marginBottom: 0, flex: 1, maxWidth: '300px' }}>
-          <select 
-            className="input" 
-            value={departmentId} 
-            onChange={e => setDepartmentId(e.target.value)} 
+          <Select
+            className="input"
+            value={departmentId}
+            onChange={e => setDepartmentId(e.target.value)}
             required
           >
             <option value="">Selecione um Departamento...</option>
             {departments.map(dep => (
               <option key={dep.id} value={dep.id}>{dep.name}</option>
             ))}
-          </select>
+          </Select>
         </div>
         <button type="submit" className="btn btn-primary" style={{ height: '40px' }}>
-          <Plus size={18} /> Adicionar
+          {editingId ? <><Edit size={18} /> Salvar</> : <><Plus size={18} /> Adicionar</>}
         </button>
+        {editingId && (
+          <button type="button" className="btn btn-outline" style={{ height: '40px' }} onClick={cancelEdit}>Cancelar</button>
+        )}
       </form>
 
       {loading ? <p>Carregando responsáveis...</p> : (
@@ -95,7 +114,7 @@ export default function Responsibles() {
               <tr>
                 <th>Nome</th>
                 <th>Departamento</th>
-                <th style={{ width: '100px', textAlign: 'center' }}>Ações</th>
+                <th style={{ width: '120px', textAlign: 'center' }}>Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -104,9 +123,17 @@ export default function Responsibles() {
                   <td>{resp.name}</td>
                   <td>{resp.department?.name || '-'}</td>
                   <td style={{ textAlign: 'center' }}>
-                    <button 
-                      onClick={() => handleDelete(resp.id)} 
-                      className="btn btn-outline" 
+                    <button
+                      onClick={() => startEdit(resp)}
+                      className="btn btn-outline"
+                      title="Editar"
+                      style={{ padding: '6px', borderColor: 'transparent' }}
+                    >
+                      <Edit size={18} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(resp.id)}
+                      className="btn btn-outline"
                       title="Excluir"
                       style={{ padding: '6px', color: 'var(--status-danger)', borderColor: 'transparent' }}
                     >

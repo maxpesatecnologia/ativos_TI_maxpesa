@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Plus, ArrowLeftRight } from 'lucide-react';
+import Select from '../components/Select';
 
 export default function Movements() {
   const [movements, setMovements] = useState([]);
@@ -51,6 +52,10 @@ export default function Movements() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (!form.asset_id) {
+      alert('Selecione o equipamento.');
+      return;
+    }
     const payload = {
       ...form,
       previous_responsible_id: form.previous_responsible_id || null,
@@ -88,10 +93,10 @@ export default function Movements() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               <div className="input-group">
                 <label>Equipamento *</label>
-                <select className="input" name="asset_id" value={form.asset_id} onChange={handleChange} required>
+                <Select className="input" name="asset_id" value={form.asset_id} onChange={handleChange} required>
                   <option value="">Selecione o ativo...</option>
                   {assets.map(a => <option key={a.id} value={a.id}>{a.patrimony_code} — {a.name}</option>)}
-                </select>
+                </Select>
               </div>
               <div className="input-group">
                 <label>Data *</label>
@@ -99,17 +104,17 @@ export default function Movements() {
               </div>
               <div className="input-group">
                 <label>Responsável Anterior</label>
-                <select className="input" name="previous_responsible_id" value={form.previous_responsible_id} onChange={handleChange}>
+                <Select className="input" name="previous_responsible_id" value={form.previous_responsible_id} onChange={handleChange}>
                   <option value="">Nenhum</option>
                   {responsibles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-                </select>
+                </Select>
               </div>
               <div className="input-group">
                 <label>Novo Responsável</label>
-                <select className="input" name="new_responsible_id" value={form.new_responsible_id} onChange={handleChange}>
+                <Select className="input" name="new_responsible_id" value={form.new_responsible_id} onChange={handleChange}>
                   <option value="">Nenhum</option>
                   {responsibles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-                </select>
+                </Select>
               </div>
               <div className="input-group">
                 <label>Local Anterior</label>

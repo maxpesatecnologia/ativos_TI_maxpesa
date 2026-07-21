@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Plus, Trash2 } from 'lucide-react';
+import Select from '../components/Select';
 
 const TIPOS = ['Hardware', 'Licença', 'Celular'];
 
@@ -65,9 +66,9 @@ export default function Categories() {
           placeholder="Nome da categoria (ex: Notebook, Monitor)..."
           style={{ flex: 1, maxWidth: '400px' }}
         />
-        <select className="input" value={tipo} onChange={e => setTipo(e.target.value)} style={{ maxWidth: '200px' }}>
+        <Select className="input" value={tipo} onChange={e => setTipo(e.target.value)} style={{ maxWidth: '200px' }}>
           {TIPOS.map(t => <option key={t} value={t}>{t}</option>)}
-        </select>
+        </Select>
         <button type="submit" className="btn btn-primary">
           <Plus size={18} /> Adicionar
         </button>
@@ -88,14 +89,14 @@ export default function Categories() {
                 <tr key={cat.id}>
                   <td>{cat.name}</td>
                   <td>
-                    <select
+                    <Select
                       className="input"
                       value={cat.tipo || 'Hardware'}
                       onChange={e => handleTipoChange(cat.id, e.target.value)}
-                      style={{ padding: '6px 10px' }}
+                      triggerStyle={{ padding: '6px 10px' }}
                     >
                       {TIPOS.map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
+                    </Select>
                   </td>
                   <td style={{ textAlign: 'center' }}>
                     <button

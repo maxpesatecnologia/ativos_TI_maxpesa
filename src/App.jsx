@@ -20,6 +20,7 @@ import Dashboard from './pages/Dashboard';
 import Reports from './pages/Reports';
 import DevicePasswords from './pages/DevicePasswords';
 import logoMaxpesa from './assets/logo_branca_maxpesa.png';
+import craneFleetBg from './assets/guindaste1.jpeg';
 
 // Link ativo na sidebar
 function NavLink({ to, icon: Icon, children }) {
@@ -148,7 +149,7 @@ function AppLayout({ theme, toggleTheme }) {
           </div>
         </header>
 
-        <div className="page-content">
+        <div className="page-content" style={{ '--page-bg-image': `url(${craneFleetBg})` }}>
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/assets" element={<Assets />} />

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Plus, Trash2, Pencil, Eye, EyeOff, Lock } from 'lucide-react';
+import Select from '../components/Select';
 import './DevicePasswords.css';
 
 const emptyForm = { deviceType: 'notebook', deviceName: '', departmentId: '', plainPassword: '' };
@@ -159,7 +160,7 @@ export default function DevicePasswords() {
       </div>
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '10px', marginBottom: '24px', flexWrap: 'wrap' }}>
-        <select
+        <Select
           className="input"
           value={form.deviceType}
           onChange={e => handleChange('deviceType', e.target.value)}
@@ -167,7 +168,7 @@ export default function DevicePasswords() {
         >
           <option value="notebook">Notebook</option>
           <option value="desktop">Desktop</option>
-        </select>
+        </Select>
         <input
           className="input"
           value={form.deviceName}
@@ -176,7 +177,7 @@ export default function DevicePasswords() {
           style={{ flex: 1, minWidth: '200px', maxWidth: '280px' }}
           required
         />
-        <select
+        <Select
           className="input"
           value={form.departmentId}
           onChange={e => handleChange('departmentId', e.target.value)}
@@ -184,7 +185,7 @@ export default function DevicePasswords() {
         >
           <option value="">Departamento...</option>
           {departments.map(d => <option key={d.id} value={d.id}>{d.name}{d.unit ? ` (${d.unit})` : ''}</option>)}
-        </select>
+        </Select>
         <input
           className="input"
           type="text"

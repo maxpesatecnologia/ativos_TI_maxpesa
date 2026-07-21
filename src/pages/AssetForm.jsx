@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Save, ArrowLeft } from 'lucide-react';
+import Select from '../components/Select';
 
 export default function AssetForm() {
   const { id } = useParams();
@@ -97,6 +98,10 @@ export default function AssetForm() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (!formData.category_id) {
+      alert('Selecione a categoria.');
+      return;
+    }
     setLoading(true);
 
     const payload = {
@@ -145,10 +150,10 @@ export default function AssetForm() {
 
             <div className="input-group">
               <label>Categoria *</label>
-              <select required className="input" name="category_id" value={formData.category_id} onChange={handleChange}>
+              <Select required className="input" name="category_id" value={formData.category_id} onChange={handleChange}>
                 <option value="">Selecione...</option>
                 {categoriasDisponiveis.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
+              </Select>
               {!isEditing && tipoDoFiltro && categoriasDisponiveis.length === 0 && (
                 <small style={{ color: 'var(--status-warning)' }}>
                   Nenhuma categoria do tipo "{tipoDoFiltro}" cadastrada ainda. Crie uma em Categorias antes de continuar.
@@ -174,12 +179,12 @@ export default function AssetForm() {
 
             <div className="input-group">
               <label>Status *</label>
-              <select required className="input" name="status" value={formData.status} onChange={handleChange}>
+              <Select required className="input" name="status" value={formData.status} onChange={handleChange}>
                 <option value="Estoque">Estoque</option>
                 <option value="Em uso">Em uso</option>
                 <option value="Manutenção">Manutenção</option>
                 <option value="Baixado">Baixado</option>
-              </select>
+              </Select>
             </div>
             
             <div className="input-group">
@@ -265,18 +270,18 @@ export default function AssetForm() {
               
               <div className="input-group">
                 <label>Responsável</label>
-                <select className="input" name="responsible_id" value={formData.responsible_id} onChange={handleChange}>
+                <Select className="input" name="responsible_id" value={formData.responsible_id} onChange={handleChange}>
                   <option value="">Nenhum</option>
                   {responsibles.map(r => <option key={r.id} value={r.id}>{r.name} ({r.department?.name})</option>)}
-                </select>
+                </Select>
               </div>
 
               <div className="input-group">
                 <label>Local Físico (Departamento)</label>
-                <select className="input" name="physical_location" value={formData.physical_location} onChange={handleChange}>
+                <Select className="input" name="physical_location" value={formData.physical_location} onChange={handleChange}>
                   <option value="">Selecione...</option>
                   {departments.map(d => <option key={d.id} value={d.name}>{d.name}{d.unit ? ` (${d.unit})` : ''}</option>)}
-                </select>
+                </Select>
               </div>
 
               <div className="input-group">
