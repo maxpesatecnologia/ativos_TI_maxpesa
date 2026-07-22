@@ -76,9 +76,9 @@ export default function Assets() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h2>Gestão de Ativos</h2>
-        <Link to={activeFilter === 'Todos' ? '/assets/new' : `/assets/new?tipo=${encodeURIComponent(activeFilter)}`} className="btn btn-primary">
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+        <h2 style={{ minWidth: 0 }}>Gestão de Ativos</h2>
+        <Link to={activeFilter === 'Todos' ? '/assets/new' : `/assets/new?tipo=${encodeURIComponent(activeFilter)}`} className="btn btn-primary" style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>
           <Plus size={18} /> Novo Ativo
         </Link>
       </div>
@@ -131,8 +131,19 @@ export default function Assets() {
               {filteredAssets.map(asset => (
                 <tr key={asset.id}>
                   <td><strong>{asset.patrimony_code}</strong></td>
-                  <td>{asset.name} <br/><small style={{ color: 'var(--text-secondary)' }}>{asset.brand} {asset.model}</small></td>
-                  {activeFilter === 'Todos' && <td>{asset.category?.name}</td>}
+                  <td>
+                    {asset.category?.tipo === 'Celular' || asset.phone_number || asset.imei_device ? (
+                      `${asset.brand || ''} ${asset.model || ''}`.trim() || asset.name
+                    ) : (
+                      <>
+                        {asset.name}
+                        <br/><small style={{ color: 'var(--text-secondary)' }}>{asset.brand} {asset.model}</small>
+                      </>
+                    )}
+                  </td>
+                  {activeFilter === 'Todos' && (
+                    <td>{asset.category?.tipo === 'Licença' || asset.license_type ? 'Licença' : asset.category?.name}</td>
+                  )}
                   {activeFilter === 'Hardware' && (
                     <td>{asset.processor || '—'} <br/><small style={{ color: 'var(--text-secondary)' }}>{asset.ram}</small></td>
                   )}

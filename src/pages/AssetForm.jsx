@@ -4,6 +4,10 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Save, ArrowLeft } from 'lucide-react';
 import Select from '../components/Select';
 import Toast from '../components/Toast';
+import { onlyDigits, phoneChars, ipAddressChars, macAddressChars } from '../lib/textFilters';
+
+const CAMPOS_APENAS_DIGITOS = ['imei_device', 'imei_chip'];
+const CAMPOS_TELEFONE = ['phone_number'];
 
 export default function AssetForm() {
   const { id } = useParams();
@@ -101,7 +105,12 @@ export default function AssetForm() {
 
   function handleChange(e) {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    let sanitized = value;
+    if (CAMPOS_APENAS_DIGITOS.includes(name)) sanitized = onlyDigits(value);
+    else if (CAMPOS_TELEFONE.includes(name)) sanitized = phoneChars(value);
+    else if (name === 'ip_address') sanitized = ipAddressChars(value);
+    else if (name === 'mac_address') sanitized = macAddressChars(value);
+    setFormData(prev => ({ ...prev, [name]: sanitized }));
   }
 
   async function gerarPatrimonioAutomatico() {

@@ -1,11 +1,78 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Plus, Trash2, Pencil, Eye, EyeOff, Lock } from 'lucide-react';
+import { Plus, Trash2, Pencil, Eye, EyeOff, Lock, FileText, Sheet } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 import Select from '../components/Select';
+import Modal from '../components/Modal';
 import ConfirmModal from '../components/ConfirmModal';
 import AlertModal from '../components/AlertModal';
 import Toast from '../components/Toast';
 import './DevicePasswords.css';
+
+function formatDept(departments, departmentId) {
+  const dept = departments.find(dep => dep.id === departmentId);
+  return dept ? `${dept.name}${dept.unit ? ` (${dept.unit})` : ''}` : '-';
+}
+
+function exportPasswordsPDF(devices, departments, password) {
+  const doc = new jsPDF({
+    orientation: 'landscape',
+    encryption: { userPassword: password, ownerPassword: password },
+  });
+
+  doc.setFillColor(227, 6, 19);
+  doc.rect(0, 0, doc.internal.pageSize.width, 18, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(13);
+  doc.setFont('helvetica', 'bold');
+  doc.text('GRUPO MAXPESA — Cofre de Senhas de Dispositivos', 14, 12);
+
+  doc.setTextColor(50, 50, 50);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Relatório de Senhas de Dispositivos', 14, 28);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 14, 34);
+  doc.text('Arquivo protegido por senha. Trate com confidencialidade.', 14, 39);
+
+  autoTable(doc, {
+    startY: 45,
+    head: [['Tipo', 'Dispositivo', 'Departamento', 'Senha']],
+    body: devices.map(d => [
+      d.device_type === 'notebook' ? 'Notebook' : 'Desktop',
+      d.device_name,
+      formatDept(departments, d.department_id),
+      d.password,
+    ]),
+    styles: { fontSize: 8, cellPadding: 4 },
+    headStyles: {
+      fillColor: [17, 17, 17],
+      textColor: [255, 255, 255],
+      fontStyle: 'bold',
+      halign: 'left',
+    },
+    alternateRowStyles: { fillColor: [248, 248, 248] },
+    margin: { left: 14, right: 14 },
+  });
+
+  doc.save(`Senhas_de_Dispositivos_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`);
+}
+
+function exportPasswordsExcel(devices, departments) {
+  const rows = devices.map(d => ({
+    Tipo: d.device_type === 'notebook' ? 'Notebook' : 'Desktop',
+    Dispositivo: d.device_name,
+    Departamento: formatDept(departments, d.department_id),
+    Senha: d.password,
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Senhas');
+  XLSX.writeFile(wb, `Senhas_de_Dispositivos_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.xlsx`);
+}
 
 const emptyForm = { deviceType: 'notebook', deviceName: '', departmentId: '', plainPassword: '' };
 
@@ -25,6 +92,11 @@ export default function DevicePasswords() {
   const [deleteId, setDeleteId] = useState(null);
   const [alertMessage, setAlertMessage] = useState('');
   const [toastMessage, setToastMessage] = useState('');
+
+  const [reportMode, setReportMode] = useState(null); // 'pdf' | 'excel' | null
+  const [reportPasswordInput, setReportPasswordInput] = useState('');
+  const [reportError, setReportError] = useState('');
+  const [reportLoading, setReportLoading] = useState(false);
 
   useEffect(() => {
     if (unlocked) fetchDepartments();
@@ -133,6 +205,37 @@ export default function DevicePasswords() {
     setRevealed(r => ({ ...r, [id]: !r[id] }));
   }
 
+  function openReportModal(mode) {
+    setReportMode(mode);
+    setReportPasswordInput('');
+    setReportError('');
+  }
+
+  function closeReportModal() {
+    setReportMode(null);
+    setReportPasswordInput('');
+    setReportError('');
+  }
+
+  async function confirmReport(e) {
+    e.preventDefault();
+    setReportError('');
+    setReportLoading(true);
+    const { data, error } = await supabase.rpc('list_device_passwords', { vault_password: reportPasswordInput });
+    setReportLoading(false);
+
+    if (error) {
+      setReportError('Senha do cofre incorreta.');
+      return;
+    }
+
+    if (reportMode === 'pdf') exportPasswordsPDF(data || [], departments, reportPasswordInput);
+    else exportPasswordsExcel(data || [], departments);
+
+    closeReportModal();
+    setToastMessage('Relatório gerado com sucesso!');
+  }
+
   if (!unlocked) {
     return (
       <div className="vault-gate-wrap">
@@ -167,10 +270,31 @@ export default function DevicePasswords() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h2 style={{ margin: 0 }}>Senhas de Dispositivos</h2>
-        <button onClick={handleLock} className="btn btn-outline">
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+        <h2 style={{ margin: 0, minWidth: 0 }}>Senhas de Dispositivos</h2>
+        <button onClick={handleLock} className="btn btn-outline" style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>
           <Lock size={16} /> Bloquear
+        </button>
+      </div>
+
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '20px' }}>
+        <button
+          type="button"
+          className="btn btn-primary"
+          style={{ flexShrink: 0, whiteSpace: 'nowrap' }}
+          title="Exportar PDF protegido por senha"
+          onClick={() => openReportModal('pdf')}
+        >
+          <FileText size={16} /> PDF
+        </button>
+        <button
+          type="button"
+          className="btn"
+          style={{ flexShrink: 0, whiteSpace: 'nowrap', backgroundColor: 'var(--status-success)', color: '#FFFFFF' }}
+          title="Exportar Excel (arquivo sem senha)"
+          onClick={() => openReportModal('excel')}
+        >
+          <Sheet size={16} /> Excel
         </button>
       </div>
 
@@ -210,11 +334,11 @@ export default function DevicePasswords() {
           style={{ flex: 1, minWidth: '160px', maxWidth: '220px' }}
           required
         />
-        <button type="submit" className="btn btn-primary">
+        <button type="submit" className="btn btn-primary" style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>
           {editingId ? <><Pencil size={18} /> Salvar</> : <><Plus size={18} /> Adicionar</>}
         </button>
         {editingId && (
-          <button type="button" className="btn btn-outline" onClick={cancelEdit}>Cancelar</button>
+          <button type="button" className="btn btn-outline" style={{ flexShrink: 0, whiteSpace: 'nowrap' }} onClick={cancelEdit}>Cancelar</button>
         )}
       </form>
 
@@ -242,16 +366,18 @@ export default function DevicePasswords() {
                     </td>
                     <td>{d.device_name}</td>
                     <td>{dept ? `${dept.name}${dept.unit ? ` (${dept.unit})` : ''}` : '—'}</td>
-                    <td style={{ fontFamily: 'monospace', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      {revealed[d.id] ? d.password : '••••••••'}
-                      <button
-                        onClick={() => toggleReveal(d.id)}
-                        className="btn btn-outline"
-                        title={revealed[d.id] ? 'Ocultar' : 'Mostrar'}
-                        style={{ padding: '4px', borderColor: 'transparent' }}
-                      >
-                        {revealed[d.id] ? <EyeOff size={16} /> : <Eye size={16} />}
-                      </button>
+                    <td style={{ fontFamily: 'monospace' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {revealed[d.id] ? d.password : '••••••••'}
+                        <button
+                          onClick={() => toggleReveal(d.id)}
+                          className="btn btn-outline"
+                          title={revealed[d.id] ? 'Ocultar' : 'Mostrar'}
+                          style={{ padding: '4px', borderColor: 'transparent' }}
+                        >
+                          {revealed[d.id] ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
                     </td>
                     <td style={{ textAlign: 'center' }}>
                       <button
@@ -303,6 +429,37 @@ export default function DevicePasswords() {
         message={toastMessage}
         onClose={() => setToastMessage('')}
       />
+
+      <Modal open={!!reportMode} onClose={closeReportModal} title="Confirmar Senha do Cofre" icon={Lock}>
+        <p style={{ marginBottom: '12px' }}>
+          Digite novamente a senha do cofre para gerar o relatório em{' '}
+          {reportMode === 'pdf'
+            ? 'PDF (o arquivo sairá protegido com esta mesma senha).'
+            : 'Excel (este arquivo não terá senha própria).'}
+        </p>
+        <form onSubmit={confirmReport}>
+          <div className="input-group">
+            <input
+              className="input"
+              type="password"
+              value={reportPasswordInput}
+              onChange={e => setReportPasswordInput(e.target.value)}
+              placeholder="Senha do cofre"
+              autoFocus
+              required
+            />
+          </div>
+          {reportError && (
+            <p style={{ color: 'var(--status-danger)', fontSize: '13px', marginBottom: '12px' }}>{reportError}</p>
+          )}
+          <div className="modal-actions">
+            <button type="button" className="btn btn-outline" onClick={closeReportModal}>Cancelar</button>
+            <button type="submit" className="btn btn-primary" disabled={reportLoading}>
+              {reportLoading ? 'Verificando...' : 'Gerar Relatório'}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

@@ -30,7 +30,7 @@
   --brand-secondary-hover: var(--gray-dark);
   
   /* Cores de Status */
-  --status-success: #10b981;
+  --status-success: rgba(0, 135, 7, 0.731);
   --status-warning: var(--brand-orange);
   --status-danger: var(--brand-red);
   --status-info: #0ea5e9;
@@ -197,6 +197,7 @@ h2 {
 
 .main-content {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -238,6 +239,7 @@ h2 {
   padding: 32px;
   flex: 1;
   min-height: 0;
+  min-width: 0;
   overflow-x: hidden;
   overflow-y: auto;
 }
@@ -307,6 +309,15 @@ h2 {
   border-color: var(--gray-medium);
 }
 
+.btn-success {
+  background-color: var(--status-success);
+  color: var(--brand-white);
+}
+
+.btn-success:hover {
+  filter: brightness(0.92);
+}
+
 /* Inputs */
 .input-group {
   display: flex;
@@ -339,6 +350,16 @@ h2 {
   border-color: var(--brand-primary);
 }
 
+.input:-webkit-autofill,
+.input:-webkit-autofill:hover,
+.input:-webkit-autofill:focus,
+.input:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--text-primary);
+  -webkit-box-shadow: 0 0 0 1000px var(--bg-primary) inset;
+  box-shadow: 0 0 0 1000px var(--bg-primary) inset;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
 /* Tabelas */
 .table-container {
   width: 100%;
@@ -357,6 +378,7 @@ table {
 th, td {
   padding: 16px;
   border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
 }
 
 th {

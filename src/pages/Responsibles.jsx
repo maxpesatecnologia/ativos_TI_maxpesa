@@ -5,6 +5,7 @@ import Select from '../components/Select';
 import ConfirmModal from '../components/ConfirmModal';
 import AlertModal from '../components/AlertModal';
 import Toast from '../components/Toast';
+import { onlyLetters } from '../lib/textFilters';
 
 export default function Responsibles() {
   const [responsibles, setResponsibles] = useState([]);
@@ -93,11 +94,11 @@ export default function Responsibles() {
 
       <form onSubmit={handleAdd} style={{ display: 'flex', gap: '10px', marginBottom: '24px', alignItems: 'flex-start' }}>
         <div className="input-group" style={{ marginBottom: 0, flex: 1, maxWidth: '300px' }}>
-          <input 
-            className="input" 
-            value={name} 
-            onChange={e => setName(e.target.value)} 
-            placeholder="Nome Completo" 
+          <input
+            className="input"
+            value={name}
+            onChange={e => setName(onlyLetters(e.target.value))}
+            placeholder="Nome Completo"
             required
           />
         </div>

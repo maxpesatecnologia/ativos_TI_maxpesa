@@ -81,12 +81,12 @@ export default function Movements() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+        <div style={{ minWidth: 0 }}>
           <h2 style={{ marginBottom: '4px' }}>Movimentações</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Registro de todas as trocas de responsável ou local.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowForm(v => !v)}>
+        <button className="btn btn-primary" style={{ flexShrink: 0, whiteSpace: 'nowrap' }} onClick={() => setShowForm(v => !v)}>
           <Plus size={18} /> Nova Movimentação
         </button>
       </div>

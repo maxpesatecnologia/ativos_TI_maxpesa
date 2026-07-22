@@ -2,6 +2,17 @@ import { useEffect, useRef, useState, Children, isValidElement } from 'react';
 import { ChevronDown } from 'lucide-react';
 import './Select.css';
 
+const SEARCH_THRESHOLD = 8;
+
+const DIACRITICS_REGEX = new RegExp(String.fromCharCode(0x5b, 0x300, 0x2d, 0x36f, 0x5d), 'g');
+
+function normalize(text) {
+  return String(text)
+    .normalize('NFD')
+    .replace(DIACRITICS_REGEX, '')
+    .toLowerCase();
+}
+
 export default function Select({
   children,
   value,
@@ -15,7 +26,9 @@ export default function Select({
 }) {
   const [open, setOpen] = useState(false);
   const [highlighted, setHighlighted] = useState(-1);
+  const [searchTerm, setSearchTerm] = useState('');
   const rootRef = useRef(null);
+  const searchRef = useRef(null);
 
   const options = Children.toArray(children)
     .filter(isValidElement)
@@ -24,6 +37,11 @@ export default function Select({
       label: child.props.children,
       disabled: !!child.props.disabled,
     }));
+
+  const showSearch = options.length > SEARCH_THRESHOLD;
+  const filteredOptions = showSearch && searchTerm.trim()
+    ? options.filter(o => normalize(o.label).includes(normalize(searchTerm)))
+    : options;
 
   const selectedIndex = options.findIndex(o => String(o.value) === String(value));
   const selected = selectedIndex >= 0 ? options[selectedIndex] : null;
@@ -38,6 +56,18 @@ export default function Select({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    if (open && showSearch) {
+      setSearchTerm('');
+      requestAnimationFrame(() => searchRef.current?.focus());
+    }
+    if (!open) setSearchTerm('');
+  }, [open, showSearch]);
+
+  useEffect(() => {
+    setHighlighted(filteredOptions.length > 0 ? 0 : -1);
+  }, [searchTerm]);
+
   function selectOption(opt) {
     if (opt.disabled) return;
     if (onChange) onChange({ target: { name, value: opt.value } });
@@ -46,13 +76,21 @@ export default function Select({
 
   function handleKeyDown(e) {
     if (disabled) return;
-    if (e.key === 'Enter' || e.key === ' ') {
+    if (e.key === 'Enter') {
       e.preventDefault();
       if (!open) {
         setOpen(true);
         setHighlighted(selectedIndex >= 0 ? selectedIndex : 0);
-      } else if (highlighted >= 0) {
-        selectOption(options[highlighted]);
+      } else if (highlighted >= 0 && filteredOptions[highlighted]) {
+        selectOption(filteredOptions[highlighted]);
+      }
+    } else if (e.key === ' ' && !(open && showSearch)) {
+      e.preventDefault();
+      if (!open) {
+        setOpen(true);
+        setHighlighted(selectedIndex >= 0 ? selectedIndex : 0);
+      } else if (highlighted >= 0 && filteredOptions[highlighted]) {
+        selectOption(filteredOptions[highlighted]);
       }
     } else if (e.key === 'Escape') {
       setOpen(false);
@@ -62,7 +100,7 @@ export default function Select({
         setOpen(true);
         setHighlighted(selectedIndex >= 0 ? selectedIndex : 0);
       } else {
-        setHighlighted(h => Math.min(options.length - 1, h + 1));
+        setHighlighted(h => Math.min(filteredOptions.length - 1, h + 1));
       }
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
@@ -100,28 +138,45 @@ export default function Select({
         <ChevronDown size={16} className="custom-select-icon" />
       </button>
       {open && (
-        <ul className="custom-select-list" role="listbox">
-          {options.map((opt, i) => (
-            <li
-              key={i}
-              role="option"
-              aria-selected={String(opt.value) === String(value)}
-              className={[
-                'custom-select-option',
-                String(opt.value) === String(value) ? 'selected' : '',
-                i === highlighted ? 'highlighted' : '',
-                opt.disabled ? 'disabled' : '',
-              ].join(' ').trim()}
-              onMouseDown={e => {
-                e.preventDefault();
-                selectOption(opt);
-              }}
-              onMouseEnter={() => setHighlighted(i)}
-            >
-              {opt.label}
-            </li>
-          ))}
-        </ul>
+        <div className="custom-select-list" role="listbox">
+          {showSearch && (
+            <input
+              ref={searchRef}
+              type="text"
+              className="custom-select-search"
+              placeholder="Pesquisar..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onClick={e => e.stopPropagation()}
+            />
+          )}
+          <ul className="custom-select-options">
+            {filteredOptions.map((opt, i) => (
+              <li
+                key={i}
+                role="option"
+                aria-selected={String(opt.value) === String(value)}
+                className={[
+                  'custom-select-option',
+                  String(opt.value) === String(value) ? 'selected' : '',
+                  i === highlighted ? 'highlighted' : '',
+                  opt.disabled ? 'disabled' : '',
+                ].join(' ').trim()}
+                onMouseDown={e => {
+                  e.preventDefault();
+                  selectOption(opt);
+                }}
+                onMouseEnter={() => setHighlighted(i)}
+              >
+                {opt.label}
+              </li>
+            ))}
+            {filteredOptions.length === 0 && (
+              <li className="custom-select-empty">Nenhum resultado encontrado.</li>
+            )}
+          </ul>
+        </div>
       )}
     </div>
   );
