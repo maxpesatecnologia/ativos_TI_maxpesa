@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import logoMaxpesa from '../assets/maxpesa_logo_png.png';
-import guindasteBg from '../assets/guindaste6.png';
+import loginBanner from '../assets/guindaste6.png';
 import './Login.css';
 
 export default function Login() {
@@ -46,7 +46,7 @@ export default function Login() {
 
   return (
     <div className="login-page">
-      <div className="login-bg" style={{ '--login-bg-image': `url(${guindasteBg})` }} />
+      <div className="login-bg" style={{ '--login-bg-image': `url(${loginBanner})` }} />
       <div className="login-overlay" />
 
       <div className="login-card">

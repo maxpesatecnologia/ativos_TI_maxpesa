@@ -39,9 +39,18 @@ export default function Dashboard() {
   const [stats, setStats] = useState({ total: 0, inUse: 0, stock: 0, maintenance: 0, retired: 0 });
   const [categoryData, setCategoryData] = useState({ labels: [], values: [] });
   const [loading, setLoading] = useState(true);
+  const [isDark, setIsDark] = useState(document.documentElement.getAttribute('data-theme') === 'dark');
 
   useEffect(() => {
     fetchStats();
+  }, []);
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.getAttribute('data-theme') === 'dark');
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => observer.disconnect();
   }, []);
 
   async function fetchStats() {
@@ -107,7 +116,7 @@ export default function Dashboard() {
                   plugins: {
                     legend: {
                       position: 'bottom',
-                      labels: { color: 'var(--text-primary)', font: { size: 12 }, padding: 16 }
+                      labels: { color: isDark ? '#FFFFFF' : '#111111', font: { size: 12 }, padding: 16 }
                     }
                   }
                 }}
