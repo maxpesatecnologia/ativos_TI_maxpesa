@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Plus, Wrench } from 'lucide-react';
 import Select from '../components/Select';
+import AlertModal from '../components/AlertModal';
+import Toast from '../components/Toast';
 
 export default function Maintenances() {
   const [maintenances, setMaintenances] = useState([]);
@@ -9,6 +11,8 @@ export default function Maintenances() {
   const [responsibles, setResponsibles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [toastMessage, setToastMessage] = useState('');
 
   const [form, setForm] = useState({
     asset_id: '',
@@ -52,7 +56,7 @@ export default function Maintenances() {
   async function handleSubmit(e) {
     e.preventDefault();
     if (!form.asset_id) {
-      alert('Selecione o equipamento.');
+      setAlertMessage('Selecione o equipamento.');
       return;
     }
     const payload = {
@@ -60,7 +64,7 @@ export default function Maintenances() {
       technician_id: form.technician_id || null,
     };
     const { error } = await supabase.from('it_maintenances').insert([payload]);
-    if (error) alert('Erro ao registrar: ' + error.message);
+    if (error) setAlertMessage('Erro ao registrar: ' + error.message);
     else {
       setShowForm(false);
       setForm({
@@ -69,6 +73,7 @@ export default function Maintenances() {
         technician_id: '', notes: '',
       });
       fetchAll();
+      setToastMessage('Manutenção registrada com sucesso!');
     }
   }
 
@@ -180,6 +185,18 @@ export default function Maintenances() {
           </table>
         </div>
       )}
+
+      <AlertModal
+        open={!!alertMessage}
+        title="Atenção"
+        message={alertMessage}
+        onClose={() => setAlertMessage('')}
+      />
+      <Toast
+        open={!!toastMessage}
+        message={toastMessage}
+        onClose={() => setToastMessage('')}
+      />
     </div>
   );
 }

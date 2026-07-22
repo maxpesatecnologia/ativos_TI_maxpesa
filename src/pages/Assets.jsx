@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Plus, Search, Edit, Trash2 } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import ConfirmModal from '../components/ConfirmModal';
+import AlertModal from '../components/AlertModal';
+import Toast from '../components/Toast';
 
 const FILTROS = [
   { key: 'Todos', label: 'Todos' },
@@ -15,11 +18,22 @@ export default function Assets() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState('Todos');
+  const [deleteId, setDeleteId] = useState(null);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [toastMessage, setToastMessage] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     fetchAssets();
   }, []);
+
+  useEffect(() => {
+    if (location.state?.toast) {
+      setToastMessage(location.state.toast);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state]);
 
   async function fetchAssets() {
     setLoading(true);
@@ -36,17 +50,28 @@ export default function Assets() {
     setLoading(false);
   }
 
-  async function handleDelete(id) {
-    if (!confirm('Deseja realmente excluir este ativo? O histórico será perdido.')) return;
+  function handleDelete(id) {
+    setDeleteId(id);
+  }
+
+  async function confirmDelete() {
+    const id = deleteId;
+    setDeleteId(null);
     const { error } = await supabase.from('it_assets').delete().eq('id', id);
-    if (!error) fetchAssets();
-    else alert('Erro ao excluir: ' + error.message);
+    if (!error) {
+      fetchAssets();
+      setToastMessage('Ativo excluído com sucesso!');
+    } else setAlertMessage('Erro ao excluir: ' + error.message);
   }
 
   const filteredAssets = assets.filter(asset => {
     if (activeFilter !== 'Todos' && (asset.category?.tipo || 'Hardware') !== activeFilter) return false;
-    return asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      asset.patrimony_code.toLowerCase().includes(searchTerm.toLowerCase());
+    const termo = searchTerm.toLowerCase();
+    return asset.name.toLowerCase().includes(termo) ||
+      asset.patrimony_code.toLowerCase().includes(termo) ||
+      (asset.license_type || '').toLowerCase().includes(termo) ||
+      (asset.responsible?.name || '').toLowerCase().includes(termo) ||
+      (asset.physical_location || '').toLowerCase().includes(termo);
   });
 
   return (
@@ -153,6 +178,24 @@ export default function Assets() {
           </table>
         </div>
       )}
+
+      <ConfirmModal
+        open={!!deleteId}
+        message="Deseja realmente excluir este ativo? O histórico será perdido."
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteId(null)}
+      />
+      <AlertModal
+        open={!!alertMessage}
+        title="Erro"
+        message={alertMessage}
+        onClose={() => setAlertMessage('')}
+      />
+      <Toast
+        open={!!toastMessage}
+        message={toastMessage}
+        onClose={() => setToastMessage('')}
+      />
     </div>
   );
 }

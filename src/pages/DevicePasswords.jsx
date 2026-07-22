@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Plus, Trash2, Pencil, Eye, EyeOff, Lock } from 'lucide-react';
 import Select from '../components/Select';
+import ConfirmModal from '../components/ConfirmModal';
+import AlertModal from '../components/AlertModal';
+import Toast from '../components/Toast';
 import './DevicePasswords.css';
 
 const emptyForm = { deviceType: 'notebook', deviceName: '', departmentId: '', plainPassword: '' };
@@ -19,6 +22,9 @@ export default function DevicePasswords() {
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
   const [revealed, setRevealed] = useState({});
+  const [deleteId, setDeleteId] = useState(null);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [toastMessage, setToastMessage] = useState('');
 
   useEffect(() => {
     if (unlocked) fetchDepartments();
@@ -93,25 +99,34 @@ export default function DevicePasswords() {
       p_vault_password: vaultPassword,
     };
 
+    const wasEditing = !!editingId;
     const { error } = editingId
       ? await supabase.rpc('update_device_password', { p_id: editingId, ...params })
       : await supabase.rpc('add_device_password', params);
 
     if (error) {
-      alert('Erro ao salvar: ' + error.message);
+      setAlertMessage('Erro ao salvar: ' + error.message);
       return;
     }
 
     setForm(emptyForm);
     setEditingId(null);
     fetchDevices(vaultPassword);
+    setToastMessage(wasEditing ? 'Registro atualizado com sucesso!' : 'Registro adicionado com sucesso!');
   }
 
-  async function handleDelete(id) {
-    if (!confirm('Deseja excluir este registro?')) return;
+  function handleDelete(id) {
+    setDeleteId(id);
+  }
+
+  async function confirmDelete() {
+    const id = deleteId;
+    setDeleteId(null);
     const { error } = await supabase.from('it_device_passwords').delete().eq('id', id);
-    if (!error) fetchDevices(vaultPassword);
-    else alert('Erro ao excluir: ' + error.message);
+    if (!error) {
+      fetchDevices(vaultPassword);
+      setToastMessage('Registro excluído com sucesso!');
+    } else setAlertMessage('Erro ao excluir: ' + error.message);
   }
 
   function toggleReveal(id) {
@@ -270,6 +285,24 @@ export default function DevicePasswords() {
           </table>
         </div>
       )}
+
+      <ConfirmModal
+        open={!!deleteId}
+        message="Deseja excluir este registro?"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteId(null)}
+      />
+      <AlertModal
+        open={!!alertMessage}
+        title="Erro"
+        message={alertMessage}
+        onClose={() => setAlertMessage('')}
+      />
+      <Toast
+        open={!!toastMessage}
+        message={toastMessage}
+        onClose={() => setToastMessage('')}
+      />
     </div>
   );
 }

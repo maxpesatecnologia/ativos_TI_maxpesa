@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Plus, Trash2, Edit } from 'lucide-react';
+import ConfirmModal from '../components/ConfirmModal';
+import AlertModal from '../components/AlertModal';
+import Toast from '../components/Toast';
 
 export default function Departments() {
   const [departments, setDepartments] = useState([]);
@@ -8,6 +11,9 @@ export default function Departments() {
   const [unit, setUnit] = useState('');
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
+  const [deleteId, setDeleteId] = useState(null);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [toastMessage, setToastMessage] = useState('');
 
   useEffect(() => {
     fetchDepartments();
@@ -36,6 +42,7 @@ export default function Departments() {
     e.preventDefault();
     if (!name.trim()) return;
 
+    const wasEditing = !!editingId;
     const { error } = editingId
       ? await supabase.from('it_departments').update({ name, unit }).eq('id', editingId)
       : await supabase.from('it_departments').insert([{ name, unit }]);
@@ -45,16 +52,24 @@ export default function Departments() {
       setUnit('');
       setEditingId(null);
       fetchDepartments();
+      setToastMessage(wasEditing ? 'Departamento atualizado com sucesso!' : 'Departamento adicionado com sucesso!');
     } else {
-      alert('Erro ao salvar: ' + error.message);
+      setAlertMessage('Erro ao salvar: ' + error.message);
     }
   }
 
-  async function handleDelete(id) {
-    if (!confirm('Deseja excluir este departamento?')) return;
+  function handleDelete(id) {
+    setDeleteId(id);
+  }
+
+  async function confirmDelete() {
+    const id = deleteId;
+    setDeleteId(null);
     const { error } = await supabase.from('it_departments').delete().eq('id', id);
-    if (!error) fetchDepartments();
-    else alert('Erro ao excluir: ' + error.message);
+    if (!error) {
+      fetchDepartments();
+      setToastMessage('Departamento excluído com sucesso!');
+    } else setAlertMessage('Erro ao excluir: ' + error.message);
   }
 
   return (
@@ -133,6 +148,24 @@ export default function Departments() {
           </table>
         </div>
       )}
+
+      <ConfirmModal
+        open={!!deleteId}
+        message="Deseja excluir este departamento?"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteId(null)}
+      />
+      <AlertModal
+        open={!!alertMessage}
+        title="Erro"
+        message={alertMessage}
+        onClose={() => setAlertMessage('')}
+      />
+      <Toast
+        open={!!toastMessage}
+        message={toastMessage}
+        onClose={() => setToastMessage('')}
+      />
     </div>
   );
 }

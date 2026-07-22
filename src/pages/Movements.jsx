@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Plus, ArrowLeftRight } from 'lucide-react';
 import Select from '../components/Select';
+import AlertModal from '../components/AlertModal';
+import Toast from '../components/Toast';
 
 export default function Movements() {
   const [movements, setMovements] = useState([]);
@@ -9,6 +11,8 @@ export default function Movements() {
   const [responsibles, setResponsibles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [toastMessage, setToastMessage] = useState('');
 
   const [form, setForm] = useState({
     asset_id: '',
@@ -53,7 +57,7 @@ export default function Movements() {
   async function handleSubmit(e) {
     e.preventDefault();
     if (!form.asset_id) {
-      alert('Selecione o equipamento.');
+      setAlertMessage('Selecione o equipamento.');
       return;
     }
     const payload = {
@@ -62,7 +66,7 @@ export default function Movements() {
       new_responsible_id: form.new_responsible_id || null,
     };
     const { error } = await supabase.from('it_movements').insert([payload]);
-    if (error) alert('Erro ao registrar: ' + error.message);
+    if (error) setAlertMessage('Erro ao registrar: ' + error.message);
     else {
       setShowForm(false);
       setForm({
@@ -71,6 +75,7 @@ export default function Movements() {
         previous_location: '', new_location: '', notes: '',
       });
       fetchAll();
+      setToastMessage('Movimentação registrada com sucesso!');
     }
   }
 
@@ -175,6 +180,18 @@ export default function Movements() {
           </table>
         </div>
       )}
+
+      <AlertModal
+        open={!!alertMessage}
+        title="Atenção"
+        message={alertMessage}
+        onClose={() => setAlertMessage('')}
+      />
+      <Toast
+        open={!!toastMessage}
+        message={toastMessage}
+        onClose={() => setToastMessage('')}
+      />
     </div>
   );
 }

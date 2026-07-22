@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Save, ArrowLeft } from 'lucide-react';
 import Select from '../components/Select';
+import Toast from '../components/Toast';
 
 export default function AssetForm() {
   const { id } = useParams();
@@ -15,6 +16,7 @@ export default function AssetForm() {
   const [responsibles, setResponsibles] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState('');
 
   const [formData, setFormData] = useState({
     patrimony_code: '',
@@ -65,6 +67,15 @@ export default function AssetForm() {
     }
   }, [isEditing, tipoCategoria, categoriasDisponiveis, formData.category_id]);
 
+  // Celular não tem Nome do Equipamento nem seletor de Categoria no formulário:
+  // usa automaticamente a categoria "Smartphone Corporativo" (ou a primeira do tipo "Celular").
+  useEffect(() => {
+    if (!isEditing && tipoCategoria === 'Celular' && !formData.category_id && categoriasDisponiveis.length > 0) {
+      const smartphoneCorporativo = categoriasDisponiveis.find(c => c.name.trim().toLowerCase() === 'smartphone corporativo');
+      setFormData(prev => ({ ...prev, category_id: (smartphoneCorporativo || categoriasDisponiveis[0]).id }));
+    }
+  }, [isEditing, tipoCategoria, categoriasDisponiveis, formData.category_id]);
+
   async function fetchOptions() {
     const { data: cats } = await supabase.from('it_categories').select('*').order('name');
     setCategories(cats || []);
@@ -107,15 +118,39 @@ export default function AssetForm() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    setFormError('');
+
     if (!formData.category_id) {
-      alert('Selecione a categoria.');
+      setFormError('Selecione a categoria antes de salvar.');
       return;
     }
+
+    if (tipoCategoria === 'Licença' && formData.license_type.trim() && formData.license_email.trim()) {
+      let duplicateQuery = supabase
+        .from('it_assets')
+        .select('patrimony_code')
+        .ilike('license_type', formData.license_type.trim())
+        .ilike('license_email', formData.license_email.trim());
+      if (isEditing) duplicateQuery = duplicateQuery.neq('id', id);
+      const { data: duplicados } = await duplicateQuery;
+      if (duplicados && duplicados.length > 0) {
+        setFormError(
+          `Esta licença já está cadastrada: "${formData.license_type.trim()}" vinculada a ${formData.license_email.trim()} ` +
+          `(patrimônio ${duplicados[0].patrimony_code}). Edite o cadastro existente em vez de criar um novo.`
+        );
+        return;
+      }
+    }
+
     setLoading(true);
 
     const payload = {
       ...formData,
-      name: tipoCategoria === 'Licença' ? (formData.license_type || 'Licença') : formData.name,
+      name: tipoCategoria === 'Licença'
+        ? (formData.license_type || 'Licença')
+        : tipoCategoria === 'Celular'
+          ? (formData.phone_number ? `Smartphone Corporativo - ${formData.phone_number}` : 'Smartphone Corporativo')
+          : formData.name,
       patrimony_code: formData.patrimony_code || await gerarPatrimonioAutomatico(),
       category_id: formData.category_id || null,
       responsible_id: formData.responsible_id || null,
@@ -124,12 +159,18 @@ export default function AssetForm() {
 
     if (isEditing) {
       const { error } = await supabase.from('it_assets').update(payload).eq('id', id);
-      if (error) alert('Erro ao atualizar: ' + error.message);
-      else navigate('/assets');
+      if (error) setFormError('Não foi possível atualizar o ativo: ' + error.message);
+      else {
+        navigate('/assets', { state: { toast: 'Ativo atualizado com sucesso!' } });
+        return;
+      }
     } else {
       const { error } = await supabase.from('it_assets').insert([payload]);
-      if (error) alert('Erro ao cadastrar: ' + error.message);
-      else navigate('/assets');
+      if (error) setFormError('Não foi possível cadastrar o ativo: ' + error.message);
+      else {
+        navigate('/assets', { state: { toast: 'Ativo adicionado com sucesso!' } });
+        return;
+      }
     }
     setLoading(false);
   }
@@ -160,6 +201,16 @@ export default function AssetForm() {
               <div className="input-group">
                 <label>E-mail Vinculado</label>
                 <input type="email" className="input" name="license_email" placeholder="usuario@maxpesa.com.br" value={formData.license_email} onChange={handleChange} />
+              </div>
+
+              <div className="input-group">
+                <label>Status *</label>
+                <Select required className="input" name="status" value={formData.status} onChange={handleChange}>
+                  <option value="Estoque">Estoque</option>
+                  <option value="Em uso">Em uso</option>
+                  <option value="Manutenção">Manutenção</option>
+                  <option value="Baixado">Baixado</option>
+                </Select>
               </div>
 
               {!isEditing && categoriasDisponiveis.length === 0 && (
@@ -201,23 +252,33 @@ export default function AssetForm() {
             <div className="card">
               <h3 style={{ marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>Informações Gerais</h3>
 
-              <div className="input-group">
-                <label>Nome do Equipamento *</label>
-                <input required className="input" name="name" value={formData.name} onChange={handleChange} />
-              </div>
+              {tipoCategoria !== 'Celular' && (
+                <div className="input-group">
+                  <label>Nome do Equipamento *</label>
+                  <input required className="input" name="name" value={formData.name} onChange={handleChange} />
+                </div>
+              )}
 
-              <div className="input-group">
-                <label>Categoria *</label>
-                <Select required className="input" name="category_id" value={formData.category_id} onChange={handleChange}>
-                  <option value="">Selecione...</option>
-                  {categoriasDisponiveis.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </Select>
-                {!isEditing && tipoDoFiltro && categoriasDisponiveis.length === 0 && (
-                  <small style={{ color: 'var(--status-warning)' }}>
-                    Nenhuma categoria do tipo "{tipoDoFiltro}" cadastrada ainda. Crie uma em Categorias antes de continuar.
-                  </small>
-                )}
-              </div>
+              {tipoCategoria !== 'Celular' && (
+                <div className="input-group">
+                  <label>Categoria *</label>
+                  <Select required className="input" name="category_id" value={formData.category_id} onChange={handleChange}>
+                    <option value="">Selecione...</option>
+                    {categoriasDisponiveis.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </Select>
+                  {!isEditing && tipoDoFiltro && categoriasDisponiveis.length === 0 && (
+                    <small style={{ color: 'var(--status-warning)' }}>
+                      Nenhuma categoria do tipo "{tipoDoFiltro}" cadastrada ainda. Crie uma em Categorias antes de continuar.
+                    </small>
+                  )}
+                </div>
+              )}
+
+              {tipoCategoria === 'Celular' && !isEditing && categoriasDisponiveis.length === 0 && (
+                <small style={{ color: 'var(--status-warning)', display: 'block', marginBottom: '14px' }}>
+                  Nenhuma categoria do tipo "Celular" cadastrada ainda. Crie uma chamada "Smartphone Corporativo" em Categorias antes de continuar.
+                </small>
+              )}
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div className="input-group">
@@ -341,7 +402,15 @@ export default function AssetForm() {
           </div>
         )}
 
-        <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+        <Toast
+          open={!!formError}
+          tone="danger"
+          message={formError}
+          duration={6000}
+          onClose={() => setFormError('')}
+        />
+
+        <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
           <button type="button" onClick={() => navigate('/assets')} className="btn btn-outline">Cancelar</button>
           <button type="submit" className="btn btn-primary" disabled={loading}>
             <Save size={18} /> {loading ? 'Salvando...' : 'Salvar Ativo'}

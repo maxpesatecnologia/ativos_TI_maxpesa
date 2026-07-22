@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Plus, Trash2 } from 'lucide-react';
 import Select from '../components/Select';
+import ConfirmModal from '../components/ConfirmModal';
+import AlertModal from '../components/AlertModal';
+import Toast from '../components/Toast';
 
 const TIPOS = ['Hardware', 'Licença', 'Celular'];
 
@@ -10,6 +13,9 @@ export default function Categories() {
   const [name, setName] = useState('');
   const [tipo, setTipo] = useState('Hardware');
   const [loading, setLoading] = useState(true);
+  const [deleteId, setDeleteId] = useState(null);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [toastMessage, setToastMessage] = useState('');
 
   useEffect(() => {
     fetchCategories();
@@ -32,26 +38,34 @@ export default function Categories() {
         setName('');
         setTipo('Hardware');
         fetchCategories();
+        setToastMessage('Categoria adicionada com sucesso!');
       } else {
-        alert('Erro ao salvar: ' + error.message);
+        setAlertMessage('Erro ao salvar: ' + error.message);
       }
     } catch (err) {
       console.error('Falha inesperada ao adicionar categoria:', err);
-      alert('Falha inesperada ao adicionar categoria: ' + err.message);
+      setAlertMessage('Falha inesperada ao adicionar categoria: ' + err.message);
     }
   }
 
   async function handleTipoChange(id, novoTipo) {
     const { error } = await supabase.from('it_categories').update({ tipo: novoTipo }).eq('id', id);
     if (!error) fetchCategories();
-    else alert('Erro ao atualizar tipo: ' + error.message);
+    else setAlertMessage('Erro ao atualizar tipo: ' + error.message);
   }
 
-  async function handleDelete(id) {
-    if (!confirm('Deseja excluir esta categoria? Ela pode estar atrelada a ativos existentes.')) return;
+  function handleDelete(id) {
+    setDeleteId(id);
+  }
+
+  async function confirmDelete() {
+    const id = deleteId;
+    setDeleteId(null);
     const { error } = await supabase.from('it_categories').delete().eq('id', id);
-    if (!error) fetchCategories();
-    else alert('Erro ao excluir: ' + error.message);
+    if (!error) {
+      fetchCategories();
+      setToastMessage('Categoria excluída com sucesso!');
+    } else setAlertMessage('Erro ao excluir: ' + error.message);
   }
 
   return (
@@ -121,6 +135,24 @@ export default function Categories() {
           </table>
         </div>
       )}
+
+      <ConfirmModal
+        open={!!deleteId}
+        message="Deseja excluir esta categoria? Ela pode estar atrelada a ativos existentes."
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteId(null)}
+      />
+      <AlertModal
+        open={!!alertMessage}
+        title="Erro"
+        message={alertMessage}
+        onClose={() => setAlertMessage('')}
+      />
+      <Toast
+        open={!!toastMessage}
+        message={toastMessage}
+        onClose={() => setToastMessage('')}
+      />
     </div>
   );
 }

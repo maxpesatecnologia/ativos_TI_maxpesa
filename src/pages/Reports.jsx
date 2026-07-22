@@ -4,6 +4,7 @@ import { FileText, Sheet, Download, Loader } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import AlertModal from '../components/AlertModal';
 
 // -----------------------------------------------------------------------
 // Helpers
@@ -155,6 +156,7 @@ function exportExcel(title, columns, rows) {
 // -----------------------------------------------------------------------
 function ReportCard({ icon: Icon, title, description, type, onExport }) {
   const [loading, setLoading] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
 
   async function handleExport(format) {
     setLoading(true);
@@ -164,7 +166,7 @@ function ReportCard({ icon: Icon, title, description, type, onExport }) {
       if (format === 'pdf') exportPDF(title, columns, rows);
       else exportExcel(title, columns, rows);
     } catch (e) {
-      alert('Erro ao gerar relatório: ' + e.message);
+      setAlertMessage('Erro ao gerar relatório: ' + e.message);
     }
     setLoading(false);
   }
@@ -205,6 +207,13 @@ function ReportCard({ icon: Icon, title, description, type, onExport }) {
           Exportar Excel
         </button>
       </div>
+
+      <AlertModal
+        open={!!alertMessage}
+        title="Erro"
+        message={alertMessage}
+        onClose={() => setAlertMessage('')}
+      />
     </div>
   );
 }

@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Plus, Trash2, Edit } from 'lucide-react';
 import Select from '../components/Select';
+import ConfirmModal from '../components/ConfirmModal';
+import AlertModal from '../components/AlertModal';
+import Toast from '../components/Toast';
 
 export default function Responsibles() {
   const [responsibles, setResponsibles] = useState([]);
@@ -11,6 +14,9 @@ export default function Responsibles() {
   const [departmentId, setDepartmentId] = useState('');
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
+  const [deleteId, setDeleteId] = useState(null);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [toastMessage, setToastMessage] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -49,6 +55,7 @@ export default function Responsibles() {
     e.preventDefault();
     if (!name.trim() || !departmentId) return;
 
+    const wasEditing = !!editingId;
     const payload = { name, department_id: departmentId };
 
     const { error } = editingId
@@ -60,16 +67,24 @@ export default function Responsibles() {
       setDepartmentId('');
       setEditingId(null);
       fetchData();
+      setToastMessage(wasEditing ? 'Responsável atualizado com sucesso!' : 'Responsável adicionado com sucesso!');
     } else {
-      alert('Erro ao salvar: ' + error.message);
+      setAlertMessage('Erro ao salvar: ' + error.message);
     }
   }
 
-  async function handleDelete(id) {
-    if (!confirm('Deseja excluir este responsável?')) return;
+  function handleDelete(id) {
+    setDeleteId(id);
+  }
+
+  async function confirmDelete() {
+    const id = deleteId;
+    setDeleteId(null);
     const { error } = await supabase.from('it_responsibles').delete().eq('id', id);
-    if (!error) fetchData();
-    else alert('Erro ao excluir: ' + error.message);
+    if (!error) {
+      fetchData();
+      setToastMessage('Responsável excluído com sucesso!');
+    } else setAlertMessage('Erro ao excluir: ' + error.message);
   }
 
   return (
@@ -153,6 +168,24 @@ export default function Responsibles() {
           </table>
         </div>
       )}
+
+      <ConfirmModal
+        open={!!deleteId}
+        message="Deseja excluir este responsável?"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteId(null)}
+      />
+      <AlertModal
+        open={!!alertMessage}
+        title="Erro"
+        message={alertMessage}
+        onClose={() => setAlertMessage('')}
+      />
+      <Toast
+        open={!!toastMessage}
+        message={toastMessage}
+        onClose={() => setToastMessage('')}
+      />
     </div>
   );
 }

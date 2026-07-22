@@ -81,8 +81,9 @@ export default function Dashboard() {
     labels: categoryData.labels,
     datasets: [{
       data: categoryData.values,
-      backgroundColor: ['#E30613', '#111111', '#666666', '#FF6A00', '#0ea5e9', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6'],
-      borderWidth: 0,
+      backgroundColor: ['#E30613', isDark ? '#FFFFFF' : '#111111', '#0ea5e9', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#eab308', '#64748b'],
+      borderColor: isDark ? '#111111' : '#FFFFFF',
+      borderWidth: 2,
     }],
   };
 
@@ -111,6 +112,7 @@ export default function Dashboard() {
           {categoryData.labels.length > 0 ? (
             <div style={{ maxWidth: '320px', margin: '0 auto' }}>
               <Doughnut
+                key={isDark ? 'dark' : 'light'}
                 data={chartData}
                 options={{
                   plugins: {

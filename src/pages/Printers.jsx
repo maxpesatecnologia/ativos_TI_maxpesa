@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Plus, Trash2, Edit } from 'lucide-react';
 import Select from '../components/Select';
+import ConfirmModal from '../components/ConfirmModal';
+import AlertModal from '../components/AlertModal';
+import Toast from '../components/Toast';
 
 export default function Printers() {
   const [printers, setPrinters] = useState([]);
@@ -11,6 +14,9 @@ export default function Printers() {
   const [departmentId, setDepartmentId] = useState('');
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
+  const [deleteId, setDeleteId] = useState(null);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [toastMessage, setToastMessage] = useState('');
 
   useEffect(() => {
     fetchPrinters();
@@ -56,6 +62,7 @@ export default function Printers() {
       department_id: departmentId || null,
     };
 
+    const wasEditing = !!editingId;
     const { error } = editingId
       ? await supabase.from('it_printers').update(payload).eq('id', editingId)
       : await supabase.from('it_printers').insert([payload]);
@@ -66,16 +73,24 @@ export default function Printers() {
       setDepartmentId('');
       setEditingId(null);
       fetchPrinters();
+      setToastMessage(wasEditing ? 'Impressora atualizada com sucesso!' : 'Impressora adicionada com sucesso!');
     } else {
-      alert('Erro ao salvar: ' + error.message);
+      setAlertMessage('Erro ao salvar: ' + error.message);
     }
   }
 
-  async function handleDelete(id) {
-    if (!confirm('Deseja excluir esta impressora?')) return;
+  function handleDelete(id) {
+    setDeleteId(id);
+  }
+
+  async function confirmDelete() {
+    const id = deleteId;
+    setDeleteId(null);
     const { error } = await supabase.from('it_printers').delete().eq('id', id);
-    if (!error) fetchPrinters();
-    else alert('Erro ao excluir: ' + error.message);
+    if (!error) {
+      fetchPrinters();
+      setToastMessage('Impressora excluída com sucesso!');
+    } else setAlertMessage('Erro ao excluir: ' + error.message);
   }
 
   return (
@@ -162,6 +177,24 @@ export default function Printers() {
           </table>
         </div>
       )}
+
+      <ConfirmModal
+        open={!!deleteId}
+        message="Deseja excluir esta impressora?"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteId(null)}
+      />
+      <AlertModal
+        open={!!alertMessage}
+        title="Erro"
+        message={alertMessage}
+        onClose={() => setAlertMessage('')}
+      />
+      <Toast
+        open={!!toastMessage}
+        message={toastMessage}
+        onClose={() => setToastMessage('')}
+      />
     </div>
   );
 }
